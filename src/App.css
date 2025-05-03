@@ -2981,3 +2981,266 @@ tr:hover {
     gap: 1rem;
   }
 }
+
+
+
+
+/* Основные стили */
+.plagiarism-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Inter', sans-serif;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+/* Заголовок */
+.plagiarism-page h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  margin-bottom: 1rem;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.plagiarism-page .description {
+  text-align: center;
+  color: #64748b;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+/* Область загрузки */
+.upload-area {
+  border: 2px dashed #cbd5e1;
+  border-radius: 1rem;
+  padding: 3rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 2rem;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.upload-area.has-file {
+  border-color: #8b5cf6;
+  background-color: #f5f3ff;
+}
+
+.upload-area:hover {
+  border-color: #8b5cf6;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.upload-area p {
+  font-size: 1.1rem;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.upload-area span {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.file-size {
+  display: block;
+  color: #8b5cf6;
+  font-weight: 500;
+}
+
+/* Индикатор загрузки */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #8b5cf6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Результаты */
+.results {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.summary {
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.summary.warning {
+  background-color: #fef2f2;
+  border-left: 4px solid #ef4444;
+}
+
+.summary.safe {
+  background-color: #f0fdf4;
+  border-left: 4px solid #10b981;
+}
+
+.summary h2 {
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.similarity-bar {
+  height: 1.5rem;
+  background: #e2e8f0;
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  transition: width 0.5s ease;
+}
+
+.similarity-bar span {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Список совпадений */
+.matches-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+}
+
+.matches-list li {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.matches-list li:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.work-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.work-meta {
+  display: flex;
+  gap: 1rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* Анализ текста */
+.text-analysis {
+  margin-top: 2rem;
+}
+
+.highlighted-text {
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid #e2e8f0;
+}
+
+mark {
+  background-color: #fef08a;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.legend {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.sample-mark {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  background: #fef08a;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+  border-radius: 0.125rem;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.results {
+  animation: fadeIn 0.5s ease;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .plagiarism-page {
+    padding: 1rem;
+  }
+  
+  .plagiarism-page h1 {
+    font-size: 2rem;
+  }
+  
+  .upload-area {
+    padding: 2rem 1rem;
+  }
+  
+  .work-meta {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

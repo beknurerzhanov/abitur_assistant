@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef} from 'react';
 import { BrowserRouter as Router, Routes, Route, Link,  useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-
+import { FiUpload, FiFileText, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 import './App.css';
 
 function App() {
@@ -74,7 +74,7 @@ function App() {
         <header className="navbar">
           <div className="logo">Claire</div>
           <nav className="nav-links">
-            {['Главная', 'Чат', 'Стажировки', 'Расписание', 'Мероприятия', 'Профиль', 'Аналитика'].map((item) => (
+            {['Главная', 'Чат', 'Стажировки', 'Расписание', 'Мероприятия', 'Профиль', 'Аналитика', 'Проверка'].map((item) => (
               <Link
                 key={item}
                 to={item === 'Главная' ? '/' : `/${item.toLowerCase()}`}
@@ -98,6 +98,7 @@ function App() {
           <Route path="/профиль" element={<ProfilePage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/аналитика" element={<AnalyticsPage />} />
+          <Route path="/Проверка" element={<PlagiarismCheckPage />} />
 
         </Routes>
       </div>
@@ -137,7 +138,7 @@ function HomePage() {
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
           >
-            <h3>Войти в аккаунт</h3>
+            <h3>Присоединиться</h3>
             <p>→</p>
           </Link>
           
@@ -1657,11 +1658,256 @@ const AnalyticsPage = () => {
 };
 
 
+function PlagiarismCheckPage() {
+  // Локальная база студенческих работ
+  const worksDatabase = [
+    {
+      id: 1,
+      title: "Анализ алгоритмов сортировки",
+      author: "Иванов Иван",
+      date: "2023-10-15",
+      content: "Алгоритмы сортировки являются важной частью программирования. Быстрая сортировка эффективна для больших данных."
+    },
+    {
+      id: 2,
+      title: "Сравнение React и Vue",
+      author: "Петрова Мария",
+      date: "2023-11-02",
+      content: "React и Vue - популярные фронтенд-фреймворки. Vue проще для новичков, а React имеет больше вакансий."
+    },
+    {
+      id: 3,
+      title: "Исследование нейросетей",
+      author: "Сидоров Алексей",
+      date: "2023-09-10",
+      content: "Нейросети revolutionизируют обработку данных. Сверточные сети особенно эффективны для image recognition."
+    }
+  ];
+
+  // Генерация хеша для текста
+  const generateHash = (text) => {
+    const normalizedText = text
+      .toLowerCase()
+      .replace(/[^\w\sа-яё]/gi, '')
+      .replace(/\s+/g, ' '); 
 
 
+    const words = normalizedText.split(' ');
+    const shingles = [];
+    
+    for (let i = 0; i <= words.length - 3; i++) {
+      shingles.push(words.slice(i, i + 3).join(' '));
+    }
+
+    return shingles.join('|');
+  };
 
 
+  const calculateSimilarity = (hash1, hash2) => {
+    if (!hash1 || !hash2) return 0;
+    
+    const shingles1 = hash1.split('|');
+    const shingles2 = hash2.split('|');
+    
+    const intersection = shingles1.filter(shingle => 
+      shingles2.includes(shingle)
+    ).length;
+    
+    const union = shingles1.length + shingles2.length - intersection;
+    
+    return Math.round((intersection / union) * 100);
+  };
 
+  // Поиск похожих работ
+  const checkAgainstDatabase = (text) => {
+    const textHash = generateHash(text);
+    const results = [];
 
+    // Генерируем хеши для всех работ в базе
+    const dbWithHashes = worksDatabase.map(work => ({
+      ...work,
+      hash: generateHash(work.content)
+    }));
+
+    dbWithHashes.forEach(item => {
+      const similarity = calculateSimilarity(textHash, item.hash);
+      if (similarity > 30) { // Порог срабатывания 30%
+        results.push({
+          ...item,
+          similarity: similarity
+        });
+      }
+    });
+
+    return results.sort((a, b) => b.similarity - a.similarity);
+  };
+
+  // Состояние компонента
+  const [file, setFile] = useState(null);
+  const [results, setResults] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Обработка загрузки файла
+  const handleFileUpload = (e) => {
+    const uploadedFile = e.target.files[0];
+    if (!uploadedFile) return;
+
+    setFile(uploadedFile);
+    setIsLoading(true);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const plagiarismResults = checkAgainstDatabase(text);
+        
+        setResults({
+          totalSimilarity: plagiarismResults[0]?.similarity || 0,
+          details: plagiarismResults,
+          originalText: text
+        });
+      } catch (error) {
+        console.error("Ошибка анализа:", error);
+        alert("Произошла ошибка при анализе файла");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    // Чтение как текст (для TXT)
+    if (uploadedFile.type === 'text/plain') {
+      reader.readAsText(uploadedFile);
+    } else {
+      alert("Пожалуйста, загрузите текстовый файл (.txt)");
+      setIsLoading(false);
+    }
+  };
+
+  // Подсветка совпадений в тексте
+  const highlightMatches = (text, matches) => {
+    if (!matches || matches.length === 0) return text;
+    
+    // Разбиваем текст на предложения для демонстрации
+    const sentences = text.split(/[.!?]+/);
+    return sentences.map((sentence, i) => {
+      const sentenceHash = generateHash(sentence);
+      const isMatch = matches.some(work => 
+        calculateSimilarity(sentenceHash, generateHash(work.content)) > 50
+      );
+      
+      return isMatch ? (
+        <mark key={i}>{sentence}.</mark>
+      ) : (
+        <span key={i}>{sentence}.</span>
+      );
+    });
+  };
+
+  return (
+    <div className="plagiarism-page">
+      <h1>Проверка на плагиат</h1>
+      <p className="description">
+        Загрузите текстовый файл (.txt) для проверки на совпадения с базой студенческих работ
+      </p>
+
+      <div 
+        className={`upload-area ${file ? 'has-file' : ''}`} 
+        onClick={() => fileInputRef.current.click()}
+      >
+        <input 
+          type="file" 
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          accept=".txt"
+          style={{ display: 'none' }}
+        />
+        
+        {file ? (
+          <>
+            <p>{file.name}</p>
+            <span className="file-size">
+              {(file.size / 1024).toFixed(1)} KB
+            </span>
+          </>
+        ) : (
+          <>
+            <p>Перетащите файл или кликните для загрузки</p>
+            <span>Поддерживается только .txt</span>
+          </>
+        )}
+      </div>
+
+      {isLoading && (
+        <div className="loading">
+          <div className="spinner"></div>
+          <p>Анализируем документ...</p>
+        </div>
+      )}
+
+      {results && (
+        <div className="results">
+          <div className={`summary ${results.totalSimilarity > 50 ? 'warning' : 'safe'}`}>
+            <h2>
+              {results.totalSimilarity > 50 ? (
+                <>⚠️ Возможен плагиат!</>
+              ) : (
+                <>✓ Низкий уровень заимствований</>
+              )}
+            </h2>
+            <div className="similarity-bar">
+              <div 
+                className="bar-fill"
+                style={{ width: `${results.totalSimilarity}%` }}
+              ></div>
+              <span>{results.totalSimilarity}%</span>
+            </div>
+            <p>
+              {results.totalSimilarity > 70 ? 
+                'Серьезные заимствования. Требуется проверка преподавателем.' :
+                results.totalSimilarity > 30 ?
+                'Умеренные заимствования. Рекомендуется доработка.' :
+                'Работа показала хорошую оригинальность.'}
+            </p>
+          </div>
+
+          {results.details.length > 0 && (
+            <>
+              <h3>Найдены совпадения:</h3>
+              <ul className="matches-list">
+                {results.details.map((work, index) => (
+                  <li key={index}>
+                    <div className="work-title">{work.title}</div>
+                    <div className="work-meta">
+                      <span>Автор: {work.author}</span>
+                      <span>Дата: {work.date}</span>
+                    </div>
+                    <div className="similarity-bar">
+                      <div 
+                        className="bar-fill"
+                        style={{ width: `${work.similarity}%` }}
+                      ></div>
+                      <span>{work.similarity}%</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+
+              <h3>Анализ текста:</h3>
+              <div className="text-analysis">
+                <div className="highlighted-text">
+                  {highlightMatches(results.originalText, results.details)}
+                </div>
+                <div className="legend">
+                  <span><mark className="sample-mark"></mark> Возможные заимствования</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+       </div>
+  );
+}
 
 export default App;
