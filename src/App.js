@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef} from 'react';
-import { BrowserRouter as Router, Routes, Route, Link,  useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link,  useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+
 import './App.css';
 
 function App() {
@@ -72,7 +74,7 @@ function App() {
         <header className="navbar">
           <div className="logo">Claire</div>
           <nav className="nav-links">
-            {['Главная', 'Чат', 'Стажировки', 'Расписание', 'Мероприятия', 'Профиль'].map((item) => (
+            {['Главная', 'Чат', 'Стажировки', 'Расписание', 'Мероприятия', 'Профиль', 'Аналитика'].map((item) => (
               <Link
                 key={item}
                 to={item === 'Главная' ? '/' : `/${item.toLowerCase()}`}
@@ -95,6 +97,7 @@ function App() {
           <Route path="/мероприятия" element={<EventsPage />} />
           <Route path="/профиль" element={<ProfilePage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/аналитика" element={<AnalyticsPage />} />
 
         </Routes>
       </div>
@@ -125,7 +128,7 @@ function HomePage() {
             onMouseLeave={() => setIsHovering(false)}
           >
             <h3>Написать в Чат</h3>
-            <p>Попробовать</p>
+      
           </Link>
 
           <Link 
@@ -867,251 +870,6 @@ const EventsPage = () => {
 };
 
 
-const ProfilePage = () => {
-  const [user, setUser] = useState({
-    name: 'Иванов Иван',
-    email: 'ivanov@university.edu',
-    faculty: 'Факультет компьютерных наук',
-    course: '3 курс',
-    gpa: '4.8',
-    skills: ['JavaScript', 'React', 'Node.js', 'Python'],
-    bio: 'Заинтересован в веб-разработке и машинном обучении. Ищу стажировку на лето 2023.'
-  });
-
-  const [avatar, setAvatar] = useState(null);
-  const [resume, setResume] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const fileInputRef = useRef(null);
-  const avatarInputRef = useRef(null);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setUser(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleAvatarUpload = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.match('image.*')) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setAvatar(event.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      setResume(file);
-    } else {
-      alert('Пожалуйста, загрузите файл в формате PDF');
-    }
-  };
-
-  return (
-    <motion.div
-      className="profile-container"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="profile-header">
-        <h1>Мой профиль</h1>
-        <button 
-          className={`edit-button ${editMode ? 'save-button' : ''}`}
-          onClick={() => setEditMode(!editMode)}
-        >
-          {editMode ? 'Сохранить' : 'Редактировать'}
-        </button>
-      </div>
-
-      <div className="profile-content">
-        <div className="profile-main">
-          <div className="avatar-section">
-            <div className="avatar-wrapper" onClick={() => editMode && avatarInputRef.current.click()}>
-              {avatar ? (
-                <img src={avatar} alt="Аватар" className="avatar" />
-              ) : (
-                <div className="avatar-placeholder">
-                  {user.name.split(' ').map(n => n[0]).join('')}
-                </div>
-              )}
-              {editMode && (
-                <>
-                  <input
-                    type="file"
-                    ref={avatarInputRef}
-                    onChange={handleAvatarUpload}
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                  />
-                  <div className="avatar-overlay">Изменить</div>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="info-section">
-            <div className="personal-info">
-              <h2>Личная информация</h2>
-              <div className="info-grid">
-                <div className="info-item">
-                  <label>ФИО</label>
-                  {editMode ? (
-                    <input
-                      type="text"
-                      name="name"
-                      value={user.name}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p>{user.name}</p>
-                  )}
-                </div>
-
-                <div className="info-item">
-                  <label>Email</label>
-                  {editMode ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={user.email}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p>{user.email}</p>
-                  )}
-                </div>
-
-                <div className="info-item">
-                  <label>Факультет</label>
-                  {editMode ? (
-                    <input
-                      type="text"
-                      name="faculty"
-                      value={user.faculty}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p>{user.faculty}</p>
-                  )}
-                </div>
-
-                <div className="info-item">
-                  <label>Курс</label>
-                  {editMode ? (
-                    <select
-                      name="course"
-                      value={user.course}
-                      onChange={handleInputChange}
-                    >
-                      {[1, 2, 3, 4, 5, 6].map(num => (
-                        <option key={num} value={`${num} курс`}>{num} курс</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p>{user.course}</p>
-                  )}
-                </div>
-
-                <div className="info-item">
-                  <label>GPA</label>
-                  {editMode ? (
-                    <input
-                      type="text"
-                      name="gpa"
-                      value={user.gpa}
-                      onChange={handleInputChange}
-                    />
-                  ) : (
-                    <p>{user.gpa}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="bio-section">
-              <h2>О себе</h2>
-              {editMode ? (
-                <textarea
-                  name="bio"
-                  value={user.bio}
-                  onChange={handleInputChange}
-                  className="bio-textarea"
-                />
-              ) : (
-                <p className="bio-text">{user.bio}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="skills-section">
-          <h2>Навыки</h2>
-          <div className="skills-tags">
-            {user.skills.map((skill, index) => (
-              <span key={index} className="skill-tag">{skill}</span>
-            ))}
-            {editMode && (
-              <button className="add-skill-button">+ Добавить</button>
-            )}
-          </div>
-        </div>
-
-        <div className="resume-section">
-          <h2>Резюме</h2>
-          <div className="resume-upload">
-            {resume ? (
-              <div className="resume-preview">
-                <span className="resume-icon">📄</span>
-                <div className="resume-details">
-                  <span className="resume-name">{resume.name}</span>
-                  <span className="resume-size">{(resume.size / 1024).toFixed(1)} KB</span>
-                </div>
-                <div className="resume-actions">
-                  <a 
-                    href={URL.createObjectURL(resume)} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="view-button"
-                  >
-                    Просмотр
-                  </a>
-                  <button 
-                    onClick={() => setResume(null)}
-                    className="remove-button"
-                  >
-                    Удалить
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <motion.div
-                className="upload-area"
-                onClick={() => fileInputRef.current.click()}
-                whileHover={{ scale: 1.02 }}
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  accept=".pdf"
-                  style={{ display: 'none' }}
-                />
-                <span className="upload-icon">📤</span>
-                <p>Загрузите ваше резюме</p>
-                <span className="file-requirements">PDF, до 5MB</span>
-              </motion.div>
-            )}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -1126,47 +884,55 @@ const AuthPage = () => {
       email: 'student@edu.ru', 
       password: 'student123', 
       role: 'student',
-      name: 'Иван Иванов'
+      name: 'Смирнов Алексей',
+      faculty: 'Факультет компьютерных наук',
+      course: '3 курс',
+      gpa: '4.7'
     },
     { 
       email: 'teacher@edu.ru', 
       password: 'teacher123', 
       role: 'teacher',
-      name: 'Мария Преподаватель'
+      name: 'Петрова Мария Ивановна',
+      department: 'Кафедра программной инженерии',
+      position: 'Доцент'
     },
     { 
       email: 'admin@edu.ru', 
       password: 'admin123', 
       role: 'admin',
-      name: 'Администратор Системы'
+      name: 'Козлов Дмитрий Сергеевич',
+      position: 'Системный администратор'
     },
     { 
       email: 'applicant@edu.ru', 
       password: 'applicant123', 
       role: 'applicant',
-      name: 'Алексей Абитуриент'
+      name: 'Новикова Екатерина',
+      status: 'На рассмотрении'
     }
   ];
 
-  const handleSubmit = (e) => {
+
+   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
 
     if (isLogin) {
-      // Логика входа
       const user = predefinedUsers.find(
         user => user.email === email && user.password === password
       );
 
       if (user) {
-        // Вход успешен - сохраняем данные пользователя и перенаправляем
+        // Сохраняем полные данные пользователя
         localStorage.setItem('user', JSON.stringify(user));
-        navigate('/');
+        // Перенаправляем с указанием роли
+        navigate(`/profile?role=${user.role}`);
       } else {
         setError('Неверный email или пароль');
       }
     } else {
-      // Логика регистрации
+      // Логика регистрации остается прежней
       if (predefinedUsers.some(user => user.email === email)) {
         setError('Пользователь с таким email уже существует');
       } else {
@@ -1174,6 +940,7 @@ const AuthPage = () => {
       }
     }
   };
+
 
   const toggleAuthMode = () => {
     setIsLogin(!isLogin);
@@ -1249,7 +1016,649 @@ const AuthPage = () => {
 };
 
 
+
 <Route path="/auth" element={<AuthPage />} />
+
+
+
+const ProfilePage = () => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const roleFromURL = searchParams.get('role');
+  
+  // Получаем данные пользователя из localStorage
+  const storedUser = JSON.parse(localStorage.getItem('user'));
+  
+  // Определяем роль: сначала из URL, потом из сохраненных данных
+  const role = roleFromURL || storedUser?.role || 'student';
+  
+  // Уникальные данные для каждой роли
+  const roleProfiles = {
+    student: {
+      name: storedUser?.name || 'Смирнов Алексей',
+      email: storedUser?.email || 'smirnov@university.edu',
+      faculty: storedUser?.faculty || 'Факультет компьютерных наук',
+      course: storedUser?.course || '3 курс',
+      gpa: storedUser?.gpa || '4.7',
+      skills: ['JavaScript', 'React', 'Python', 'SQL'],
+      bio: 'Увлекаюсь веб-разработкой и анализом данных. Ищу стажировку в IT-компании.',
+      avatar: null,
+      resume: null
+    },
+    teacher: {
+      name: storedUser?.name || 'Петрова Мария Ивановна',
+      email: storedUser?.email || 'petrova@university.edu',
+      department: storedUser?.department || 'Кафедра программной инженерии',
+      position: storedUser?.position || 'Доцент',
+      degree: 'Кандидат технических наук',
+      courses: ['Веб-технологии', 'Базы данных', 'Машинное обучение'],
+      bio: 'Преподаю с 2015 года. Научные интересы: искусственный интеллект и компьютерное зрение.',
+      avatar: null
+    },
+    admin: {
+      name: storedUser?.name || 'Козлов Дмитрий Сергеевич',
+      email: storedUser?.email || 'admin@university.edu',
+      position: storedUser?.position || 'Системный администратор',
+      accessLevel: 'Полный доступ',
+      lastLogin: new Date().toLocaleString(),
+      bio: 'Отвечаю за работу образовательного портала и смежных систем.',
+      avatar: null
+    },
+    applicant: {
+      name: storedUser?.name || 'Новикова Екатерина',
+      email: storedUser?.email || 'novikova@gmail.com',
+      status: storedUser?.status || 'На рассмотрении',
+      appliedFaculty: 'Факультет искусственного интеллекта',
+      examResults: 'Математика: 92, Информатика: 88, Русский язык: 85',
+      motivationLetter: 'Мечтаю разрабатывать системы компьютерного зрения для медицины.',
+      documents: null,
+      avatar: null
+    }
+  };
+
+  // Используем данные для текущей роли
+  const [user, setUser] = useState(roleProfiles[role]);
+  const [editMode, setEditMode] = useState(false);
+  const fileInputRef = useRef(null);
+  const avatarInputRef = useRef(null);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUser(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAvatarUpload = (e) => {
+    const file = e.target.files[0];
+    if (file?.type.match('image.*')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setUser(prev => ({ ...prev, avatar: event.target.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file?.type === 'application/pdf') {
+      if (role === 'student') {
+        setUser(prev => ({ ...prev, resume: file }));
+      } else {
+        setUser(prev => ({ ...prev, documents: file }));
+      }
+    } else {
+      alert('Пожалуйста, загрузите PDF-файл');
+    }
+  };
+
+  // Рендер специфичных полей
+  const renderRoleFields = () => {
+    switch (role) {
+      case 'student':
+        return (
+          <>
+            <div className="info-item">
+              <label>Факультет</label>
+              {editMode ? (
+                <input
+                  type="text"
+                  name="faculty"
+                  value={user.faculty}
+                  onChange={handleInputChange}
+                />
+              ) : (
+                <p>{user.faculty}</p>
+              )}
+            </div>
+            <div className="info-item">
+              <label>Курс</label>
+              {editMode ? (
+                <select
+                  name="course"
+                  value={user.course}
+                  onChange={handleInputChange}
+                >
+                  {[1, 2, 3, 4].map(n => <option key={n} value={`${n} курс`}>{n} курс</option>)}
+                </select>
+              ) : (
+                <p>{user.course}</p>
+              )}
+            </div>
+            <div className="info-item">
+              <label>Средний балл</label>
+              {editMode ? (
+                <input
+                  type="text"
+                  name="gpa"
+                  value={user.gpa}
+                  onChange={handleInputChange}
+                />
+              ) : (
+                <p>{user.gpa}</p>
+              )}
+            </div>
+          </>
+        );
+
+      case 'teacher':
+        return (
+          <>
+            <div className="info-item">
+              <label>Кафедра</label>
+              {editMode ? (
+                <input
+                  type="text"
+                  name="department"
+                  value={user.department}
+                  onChange={handleInputChange}
+                />
+              ) : (
+                <p>{user.department}</p>
+              )}
+            </div>
+            <div className="info-item">
+              <label>Должность</label>
+              <p>{user.position}</p>
+            </div>
+            <div className="info-item">
+              <label>Ученая степень</label>
+              <p>{user.degree}</p>
+            </div>
+          </>
+        );
+
+      case 'admin':
+        return (
+          <>
+            <div className="info-item">
+              <label>Должность</label>
+              <p>{user.position}</p>
+            </div>
+            <div className="info-item">
+              <label>Уровень доступа</label>
+              <p>{user.accessLevel}</p>
+            </div>
+            <div className="info-item">
+              <label>Последний вход</label>
+              <p>{user.lastLogin}</p>
+            </div>
+          </>
+        );
+
+      case 'applicant':
+        return (
+          <>
+            <div className="info-item">
+              <label>Статус заявки</label>
+              <p className={`status-${user.status.replace(' ', '')}`}>{user.status}</p>
+            </div>
+            <div className="info-item">
+              <label>Факультет</label>
+              <p>{user.appliedFaculty}</p>
+            </div>
+            <div className="info-item">
+              <label>Результаты ЕГЭ</label>
+              <p>{user.examResults}</p>
+            </div>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <motion.div
+      className={`profile-container ${role}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="profile-header">
+        <h1>
+          {role === 'student' && 'Профиль студента'}
+          {role === 'teacher' && 'Профиль преподавателя'}
+          {role === 'admin' && 'Административная панель'}
+          {role === 'applicant' && 'Моя заявка'}
+        </h1>
+        
+        {role !== 'admin' && (
+          <button
+            className={`edit-button ${editMode ? 'save-button' : ''}`}
+            onClick={() => setEditMode(!editMode)}
+          >
+            {editMode ? 'Сохранить' : 'Редактировать'}
+          </button>
+        )}
+      </div>
+
+      <div className="profile-content">
+        <div className="profile-main">
+          <div className="avatar-section">
+            <div
+              className="avatar-wrapper"
+              onClick={() => editMode && avatarInputRef.current?.click()}
+            >
+              {user.avatar ? (
+                <img src={user.avatar} alt="Аватар" className="avatar" />
+              ) : (
+                <div className="avatar-placeholder">
+                  {user.name.split(' ').map(n => n[0]).join('')}
+                </div>
+              )}
+              {editMode && (
+                <>
+                  <input
+                    type="file"
+                    ref={avatarInputRef}
+                    onChange={handleAvatarUpload}
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                  />
+                  <div className="avatar-overlay">Изменить</div>
+                </>
+              )}
+            </div>
+            <h2>{user.name}</h2>
+            <p className="role-badge">
+              {role === 'student' && 'Студент'}
+              {role === 'teacher' && 'Преподаватель'}
+              {role === 'admin' && 'Администратор'}
+              {role === 'applicant' && 'Абитуриент'}
+            </p>
+          </div>
+
+          <div className="info-section">
+            <div className="personal-info">
+              <h2>{role === 'applicant' ? 'Информация о заявке' : 'Личная информация'}</h2>
+              <div className="info-grid">
+                <div className="info-item">
+                  <label>Email</label>
+                  {editMode ? (
+                    <input
+                      type="email"
+                      name="email"
+                      value={user.email}
+                      onChange={handleInputChange}
+                    />
+                  ) : (
+                    <p>{user.email}</p>
+                  )}
+                </div>
+
+                {renderRoleFields()}
+              </div>
+            </div>
+
+            <div className="bio-section">
+              <h2>{role === 'applicant' ? 'Мотивационное письмо' : 'О себе'}</h2>
+              {editMode ? (
+                <textarea
+                  name="bio"
+                  value={user.bio || user.motivationLetter}
+                  onChange={handleInputChange}
+                  className="bio-textarea"
+                />
+              ) : (
+                <p className="bio-text">{user.bio || user.motivationLetter}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Секция навыков (студент) */}
+        {role === 'student' && (
+          <div className="skills-section">
+            <h2>Технические навыки</h2>
+            <div className="skills-tags">
+              {user.skills.map((skill, index) => (
+                <span key={index} className="skill-tag">{skill}</span>
+              ))}
+              {editMode && (
+                <button className="add-skill-button">+ Добавить навык</button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Секция курсов (преподаватель) */}
+        {role === 'teacher' && (
+          <div className="courses-section">
+            <h2>Преподаваемые дисциплины</h2>
+            <ul className="courses-list">
+              {user.courses.map((course, index) => (
+                <li key={index}>
+                  {course}
+                  {editMode && <button className="remove-course">×</button>}
+                </li>
+              ))}
+              {editMode && (
+                <button className="add-course-button">+ Добавить курс</button>
+              )}
+            </ul>
+          </div>
+        )}
+
+        {/* Секция документов */}
+        {(role === 'student' || role === 'applicant') && (
+          <div className="documents-section">
+            <h2>{role === 'student' ? 'Резюме' : 'Прикрепленные документы'}</h2>
+            <div className="document-upload">
+              {(role === 'student' ? user.resume : user.documents) ? (
+                <div className="document-preview">
+                  <span className="document-icon">📄</span>
+                  <div className="document-details">
+                    <span className="document-name">
+                      {(role === 'student' ? user.resume : user.documents)?.name}
+                    </span>
+                    <span className="document-size">
+                      {((role === 'student' ? user.resume : user.documents)?.size / 1024).toFixed(1)} KB
+                    </span>
+                  </div>
+                  <div className="document-actions">
+                    <a
+                      href={URL.createObjectURL(role === 'student' ? user.resume : user.documents)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="view-button"
+                    >
+                      Просмотр
+                    </a>
+                    <button
+                      onClick={() => role === 'student' 
+                        ? setUser(p => ({ ...p, resume: null })) 
+                        : setUser(p => ({ ...p, documents: null }))
+                      }
+                      className="remove-button"
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <motion.div
+                  className="upload-area"
+                  onClick={() => fileInputRef.current?.click()}
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept=".pdf"
+                    style={{ display: 'none' }}
+                  />
+                  <span className="upload-icon">📤</span>
+                  <p>
+                    {role === 'student' 
+                      ? 'Загрузите ваше резюме' 
+                      : 'Загрузите документы для поступления'}
+                  </p>
+                  <span className="file-requirements">PDF, не более 5MB</span>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const AnalyticsPage = () => {
+  const navigate = useNavigate();
+  const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    course: '',
+    faculty: '',
+    gpaMin: '',
+    gpaMax: ''
+  });
+
+  // Проверка роли преподавателя
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.role !== 'teacher') {
+      navigate('/profile');
+    }
+  }, [navigate]);
+
+  // Загрузка данных студентов (в реальном приложении - API запрос)
+  useEffect(() => {
+    // Имитация загрузки данных
+    setTimeout(() => {
+      const mockStudents = [
+        { id: 1, name: 'Иванов Алексей', faculty: 'ФКН', course: 3, gpa: 4.8, skills: ['JS', 'React'], status: 'активный' },
+        { id: 2, name: 'Петрова Мария', faculty: 'ФКН', course: 2, gpa: 4.5, skills: ['Python', 'Django'], status: 'активный' },
+        { id: 3, name: 'Сидоров Дмитрий', faculty: 'ФЭН', course: 4, gpa: 3.9, skills: ['Java', 'Spring'], status: 'активный' },
+        { id: 4, name: 'Козлова Анна', faculty: 'ФКН', course: 3, gpa: 4.2, skills: ['C++', 'Algorithms'], status: 'академический отпуск' },
+        { id: 5, name: 'Михайлов Иван', faculty: 'ФЭН', course: 2, gpa: 3.7, skills: ['PHP', 'Laravel'], status: 'активный' },
+      ];
+      setStudents(mockStudents);
+      setFilteredStudents(mockStudents);
+      setLoading(false);
+    }, 800);
+  }, []);
+
+  // Применение фильтров
+  useEffect(() => {
+    let result = [...students];
+    
+    if (filters.course) {
+      result = result.filter(s => s.course === parseInt(filters.course));
+    }
+    
+    if (filters.faculty) {
+      result = result.filter(s => s.faculty.toLowerCase().includes(filters.faculty.toLowerCase()));
+    }
+    
+    if (filters.gpaMin) {
+      result = result.filter(s => s.gpa >= parseFloat(filters.gpaMin));
+    }
+    
+    if (filters.gpaMax) {
+      result = result.filter(s => s.gpa <= parseFloat(filters.gpaMax));
+    }
+    
+    setFilteredStudents(result);
+  }, [filters, students]);
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Данные для графика успеваемости
+  const chartData = [
+    { name: 'ФКН', 'Средний балл': 4.3, 'Кол-во студентов': 12 },
+    { name: 'ФЭН', 'Средний балл': 3.9, 'Кол-во студентов': 8 },
+    { name: 'ФГН', 'Средний балл': 4.1, 'Кол-во студентов': 5 },
+  ];
+
+  if (loading) {
+    return <div className="loading">Загрузка данных...</div>;
+  }
+
+  return (
+    <div className="analytics-page">
+      <header className="analytics-header">
+        <h1>Аналитика студентов</h1>
+        <button 
+          className="back-button"
+          onClick={() => navigate('/profile')}
+        >
+          Назад к профилю
+        </button>
+      </header>
+
+      <div className="analytics-content">
+        <section className="filters-section">
+          <h2>Фильтры</h2>
+          <div className="filter-grid">
+            <div className="filter-item">
+              <label>Курс</label>
+              <select name="course" value={filters.course} onChange={handleFilterChange}>
+                <option value="">Все курсы</option>
+                <option value="1">1 курс</option>
+                <option value="2">2 курс</option>
+                <option value="3">3 курс</option>
+                <option value="4">4 курс</option>
+              </select>
+            </div>
+            
+            <div className="filter-item">
+              <label>Факультет</label>
+              <input 
+                type="text" 
+                name="faculty" 
+                placeholder="Введите факультет"
+                value={filters.faculty}
+                onChange={handleFilterChange}
+              />
+            </div>
+            
+            <div className="filter-item">
+              <label>GPA от</label>
+              <input 
+                type="number" 
+                name="gpaMin" 
+                min="0" 
+                max="5" 
+                step="0.1"
+                placeholder="3.0"
+                value={filters.gpaMin}
+                onChange={handleFilterChange}
+              />
+            </div>
+            
+            <div className="filter-item">
+              <label>GPA до</label>
+              <input 
+                type="number" 
+                name="gpaMax" 
+                min="0" 
+                max="5" 
+                step="0.1"
+                placeholder="5.0"
+                value={filters.gpaMax}
+                onChange={handleFilterChange}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="stats-section">
+          <div className="stat-card">
+            <h3>Всего студентов</h3>
+            <p>{students.length}</p>
+          </div>
+          <div className="stat-card">
+            <h3>Средний GPA</h3>
+            <p>{(students.reduce((sum, s) => sum + s.gpa, 0) / students.length).toFixed(2)}</p>
+          </div>
+          <div className="stat-card">
+            <h3>Активных</h3>
+            <p>{students.filter(s => s.status === 'активный').length}</p>
+          </div>
+        </section>
+
+        <section className="charts-section">
+          <div className="chart-container">
+            <h3>Успеваемость по факультетам</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="Средний балл" fill="#4f46e5" />
+                <Bar dataKey="Кол-во студентов" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        <section className="students-table-section">
+          <h2>Список студентов ({filteredStudents.length})</h2>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ФИО</th>
+                  <th>Факультет</th>
+                  <th>Курс</th>
+                  <th>GPA</th>
+                  <th>Навыки</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStudents.map(student => (
+                  <tr key={student.id}>
+                    <td>{student.name}</td>
+                    <td>{student.faculty}</td>
+                    <td>{student.course}</td>
+                    <td className={student.gpa >= 4.5 ? 'high-gpa' : student.gpa < 3.5 ? 'low-gpa' : ''}>
+                      {student.gpa}
+                    </td>
+                    <td>{student.skills.join(', ')}</td>
+                    <td className={`status-${student.status.replace(' ', '-')}`}>
+                      {student.status}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+
+
+
 
 
 
