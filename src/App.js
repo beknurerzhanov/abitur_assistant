@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef} from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link,  useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import './App.css';
 
@@ -84,19 +84,7 @@ function App() {
               </Link>
             ))}
           </nav>
-          <div className="profile-area">
-            <select className="language-select">
-              <option>US</option>
-              <option>RU</option>
-            </select>
-            <div 
-              className="profile-icon"
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-            >
-              👤
-            </div>
-          </div>
+         
         </header>
 
         <Routes>
@@ -106,6 +94,8 @@ function App() {
           <Route path="/расписание" element={<SchedulePage />} />
           <Route path="/мероприятия" element={<EventsPage />} />
           <Route path="/профиль" element={<ProfilePage />} />
+          <Route path="/auth" element={<AuthPage />} />
+
         </Routes>
       </div>
     </Router>
@@ -137,14 +127,17 @@ function HomePage() {
             <h3>Написать в Чат</h3>
             <p>Попробовать</p>
           </Link>
-          <div 
-            className="box already"
+
+          <Link 
+            to="/auth" 
+            className="box migrate"
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
           >
             <h3>Войти в аккаунт</h3>
             <p>→</p>
-          </div>
+          </Link>
+          
         </div>
       </div>
 
@@ -1117,6 +1110,146 @@ const ProfilePage = () => {
     </motion.div>
   );
 };
+
+
+const AuthPage = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  // Предустановленные пользователи
+  const predefinedUsers = [
+    { 
+      email: 'student@edu.ru', 
+      password: 'student123', 
+      role: 'student',
+      name: 'Иван Иванов'
+    },
+    { 
+      email: 'teacher@edu.ru', 
+      password: 'teacher123', 
+      role: 'teacher',
+      name: 'Мария Преподаватель'
+    },
+    { 
+      email: 'admin@edu.ru', 
+      password: 'admin123', 
+      role: 'admin',
+      name: 'Администратор Системы'
+    },
+    { 
+      email: 'applicant@edu.ru', 
+      password: 'applicant123', 
+      role: 'applicant',
+      name: 'Алексей Абитуриент'
+    }
+  ];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (isLogin) {
+      // Логика входа
+      const user = predefinedUsers.find(
+        user => user.email === email && user.password === password
+      );
+
+      if (user) {
+        // Вход успешен - сохраняем данные пользователя и перенаправляем
+        localStorage.setItem('user', JSON.stringify(user));
+        navigate('/');
+      } else {
+        setError('Неверный email или пароль');
+      }
+    } else {
+      // Логика регистрации
+      if (predefinedUsers.some(user => user.email === email)) {
+        setError('Пользователь с таким email уже существует');
+      } else {
+        setError('Регистрация новых пользователей временно недоступна');
+      }
+    }
+  };
+
+  const toggleAuthMode = () => {
+    setIsLogin(!isLogin);
+    setError('');
+  };
+
+  return (
+    <motion.div 
+      className="auth-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="auth-card">
+        <div className="auth-header">
+          <h2>{isLogin ? 'Вход в аккаунт' : 'Регистрация'}</h2>
+          <div className="auth-switch">
+            {isLogin ? 'Нет аккаунта?' : 'Уже есть аккаунт?'}
+            <button onClick={toggleAuthMode}>
+              {isLogin ? 'Зарегистрироваться' : 'Войти'}
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          {!isLogin && (
+            <div className="form-group">
+              <label>ФИО</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Иванов Иван Иванович"
+                required
+              />
+            </div>
+          )}
+
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="example@edu.ru"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Пароль</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength="6"
+            />
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <button type="submit" className="submit-button">
+            {isLogin ? 'Войти' : 'Зарегистрироваться'}
+          </button>
+        </form>
+
+        
+      </div>
+    </motion.div>
+  );
+};
+
+
+<Route path="/auth" element={<AuthPage />} />
 
 
 
