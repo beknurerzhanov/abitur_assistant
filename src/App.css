@@ -727,14 +727,22 @@ body, html, .app {
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100%; /* ✅ Важно для корректной прокрутки */
+  min-height: 0; /* важно для flex-потомков */
 }
+
 
 .chat-messages {
   flex: 1;
-  padding: 20px;
   overflow-y: auto;
-  background-color: #f8f9fa;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0; /* ✅ предотвращает переполнение */
 }
+
+
 
 .empty-chat {
   display: flex;
@@ -763,6 +771,17 @@ body, html, .app {
   padding: 12px 16px;
   border-radius: 12px;
   position: relative;
+
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+
+  font-size: 16px;
+  line-height: 1.5;
+
+  /* Вот это важно */
+  overflow: visible;
+  max-height: none;
 }
 
 .message.user .message-content {
@@ -3244,3 +3263,29 @@ mark {
     gap: 0.25rem;
   }
 }
+.chat-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e9ecef;
+  background-color: white;
+}
+
+.clear-btn,
+.upload-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  font-weight: 500;
+  background-color: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clear-btn:hover,
+.upload-btn:hover {
+  background-color: var(--primary-dark);
+}
+

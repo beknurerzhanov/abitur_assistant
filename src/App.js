@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef} from 'react';
+import { sendMessage, clearChat, uploadFile } from './api/chat';
+
 import { BrowserRouter as Router, Routes, Route, Link,  useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
@@ -154,6 +156,7 @@ function HomePage() {
 
 const ChatPage = () => {
   const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [history, setHistory] = useState([
     'Как подготовиться к собеседованию?',
@@ -161,72 +164,168 @@ const ChatPage = () => {
     'Какой лучший фреймворк для React?'
   ]);
   const [isHovering, setIsHovering] = useState(false);
-
-  const handleSendMessage = () => {
-    if (inputValue.trim()) {
-      const newMessage = {
-        id: Date.now(),
-        text: inputValue,
-        timestamp: new Date().toLocaleTimeString(),
-        isUser: true
-      };
-      
-      setMessages([...messages, newMessage]);
-      setHistory([...history, inputValue]);
-      setInputValue('');
-      
-      setTimeout(() => {
-        const botResponse = {
-          id: Date.now() + 1,
-          text: "Это автоматический ответ на ваш запрос. В реальном приложении здесь был бы ответ ИИ.",
-          timestamp: new Date().toLocaleTimeString(),
-          isUser: false
-        };
-        setMessages(prev => [...prev, botResponse]);
-      }, 1000);
+  useEffect(() => {
+    const container = document.querySelector('.chat-messages');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
     }
-  };
-
-  const loadFromHistory = (text) => {
-    const newMessage = {
+  }, [messages]);
+  const handleSendMessage = async () => {
+    const question = inputValue.trim();
+    if (!question) return;
+  
+    // 1) Добавляем ваше сообщение в чат и в историю
+    const userMsg = {
       id: Date.now(),
-      text: text,
+      text: question,
       timestamp: new Date().toLocaleTimeString(),
       isUser: true
     };
-    setMessages([...messages, newMessage]);
-    
-    setTimeout(() => {
-      const botResponse = {
+    setMessages(prev => [...prev, userMsg]);
+    setHistory(prev  => [...prev, question]);
+    setInputValue('');
+  
+    // 2) Показываем спиннер
+    setIsLoading(true);
+  
+    try {
+      // 3) Шлём на бэкенд и ждём ответа
+      const { answer, source_documents } = await sendMessage(question, history);
+  
+      const botMsg = {
         id: Date.now() + 1,
-        text: `Ответ на ваш предыдущий запрос "${text}"`,
+        text: answer,
         timestamp: new Date().toLocaleTimeString(),
         isUser: false
       };
-      setMessages(prev => [...prev, botResponse]);
-    }, 1000);
+      setMessages(prev => [...prev, botMsg]);
+    } catch (err) {
+      console.error(err);
+      // 4) При ошибке тоже показываем сообщение в чате
+      const errMsg = {
+        id: Date.now() + 2,
+        text: 'Ошибка связи с сервером',
+        timestamp: new Date().toLocaleTimeString(),
+        isUser: false
+      };
+      setMessages(prev => [...prev, errMsg]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const loadFromHistory = async (text) => {
+    // тот же алгоритм, только вопрос из истории
+    const userMsg = {
+      id: Date.now(),
+      text,
+      timestamp: new Date().toLocaleTimeString(),
+      isUser: true
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setIsLoading(true);
+  
+    try {
+      const { answer } = await sendMessage(text, history);
+      const botMsg = {
+        id: Date.now() + 1,
+        text: answer,
+        timestamp: new Date().toLocaleTimeString(),
+        isUser: false
+      };
+      setMessages(prev => [...prev, botMsg]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="chat-page">
+      {/* Левая панель — история запросов */}
       <div className="chat-history">
         <h3>История запросов</h3>
         <div className="history-list">
           {history.map((item, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               className="history-item"
               onClick={() => loadFromHistory(item)}
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
             >
               {item.length > 30 ? `${item.substring(0, 30)}...` : item}
             </div>
           ))}
         </div>
       </div>
-      
+  
+      {/* Правая панель — сам чат */}
       <div className="chat-container">
+      <div className="chat-tools">
+  <button
+    className="clear-btn"
+    onClick={async () => {
+      setMessages([]);
+      try {
+        await clearChat();
+      } catch (err) {
+        alert('Ошибка очистки: ' + err.message);
+      }
+    }}
+  >
+    🧹 Очистить чат
+  </button>
+
+  <label htmlFor="upload-file" className="upload-btn">
+    📎 Загрузить файл
+    <input
+  id="upload-file"
+  type="file"
+  style={{ display: 'none' }}
+  onChange={async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    try {
+      const {
+        message,
+        auto_question,
+        auto_answer,
+      } = await uploadFile(file);
+  
+      const now = Date.now();
+  
+      const questionMsg = {
+        id: now,
+        text: auto_question,
+        timestamp: new Date().toLocaleTimeString(),
+        isUser: true,
+      };
+  
+      const answerMsg = {
+        id: now + 1,
+        text: auto_answer,
+        timestamp: new Date().toLocaleTimeString(),
+        isUser: false,
+      };
+  
+      setMessages((prev) => [...prev, questionMsg, answerMsg]);
+      setHistory((prev) => [...prev, auto_question, auto_answer]);
+    } catch (err) {
+      const errorMsg = {
+        id: Date.now(),
+        text: 'Ошибка загрузки: ' + err.message,
+        timestamp: new Date().toLocaleTimeString(),
+        isUser: false,
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    }
+  }}
+  
+/>
+  </label>
+</div>
+
         <div className="chat-messages">
           {messages.length === 0 ? (
             <div className="empty-chat">
@@ -235,8 +334,8 @@ const ChatPage = () => {
             </div>
           ) : (
             messages.map((message) => (
-              <div 
-                key={message.id} 
+              <div
+                key={message.id}
                 className={`message ${message.isUser ? 'user' : 'bot'}`}
               >
                 <div className="message-content">
@@ -246,8 +345,16 @@ const ChatPage = () => {
               </div>
             ))
           )}
+  
+          {/* Спиннер загрузки */}
+          {isLoading && (
+            <div className="loading-spinner">
+              <div className="spinner" />
+            </div>
+          )}
         </div>
-        
+  
+        {/* Поле ввода и кнопка */}
         <div className="chat-input">
           <input
             type="text"
@@ -256,21 +363,35 @@ const ChatPage = () => {
             placeholder="Введите ваш вопрос..."
             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
           />
-          <button 
-            onClick={handleSendMessage}
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <button onClick={handleSendMessage}>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M22 2L11 13"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M22 2L15 22L11 13L2 9L22 2Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
       </div>
     </div>
   );
-};
+}  
 
 
 
